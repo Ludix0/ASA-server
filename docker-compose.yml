@@ -1,0 +1,216 @@
+services:
+  asa:
+    restart: unless-stopped
+    container_name: ASA
+    hostname: asa-server-1
+    # Image construite depuis notre propre Dockerfile (voir ./Dockerfile) —
+    # Proton y est installé au moment du build, mais tout le pilotage du
+    # serveur (SteamCMD, paramètres, lancement) vient de notre propre
+    # start_server.sh, pas d'une image tierce toute faite.
+    build: .
+    image: "ludix0/asa:latest"
+    environment:
+      # --- Réglages venant du .env partagé (secrets / communs à tous les serveurs de jeu) ---
+      - TZ=${TZ}
+
+      - PUID=${PUID}
+
+      - PGID=${PGID}
+
+      # Mot de passe pour rejoindre le serveur (laisser vide = accès libre)
+      - ASA_SERVER_PASSWORD=${password}
+
+      # Mot de passe admin, utilisé en jeu via la console (commande "enablecheats")
+      - ASA_ADMIN_PASSWORD=${adminPassword}
+
+      # Port UDP de jeu et port TCP RCON côté hôte, repris du fichier partagé
+      - GAME_PORT=${jeux1}
+
+      - RCONPort=${rcon}
+
+      # Nombre maximum de joueurs simultanés
+      - MAX_PLAYERS=${maxPlayers}
+
+
+      # --- Réglages propres à CE serveur (valeur fixe, pas partagée : voir skill) ---
+      # Force la mise à jour SteamCMD à chaque démarrage du conteneur.
+      - UPDATE_ON_START=true
+
+
+      # --- Réglages propres à CE serveur ---
+      # Carte utilisée pour le serveur
+      # Options possibles : TheIsland_WP, TheCenter_WP, ScorchedEarth_WP, Astraeos_WP,
+      #         Extinction_WP, LostColony_WP, Valguero_WP, Aberration_WP, Ragnarok_WP
+      - map=Astraeos_WP
+
+      # Nom de session affiché dans le navigateur de serveurs ARK
+      - SessionName=Ludix_ASA_FR
+
+      # Identifiant de cluster
+      - CLUSTER_ID=LudixASACluster
+
+      # Mods à charger : liste d'identifiants CurseForge séparés par des virgules (vide = aucun)
+      - MODS=
+
+      # Désactive BattlEye (anti-triche) — True recommandé : BattlEye n'est
+      # pas fiable sous Proton/Linux et peut empêcher les joueurs de se connecter
+      - NoBattlEye=True
+
+      # Paramètres de lancement libres, ajoutés tels quels à la fin de la
+      # commande (ex: "-servergamelog -UseDynamicConfig") — vide par défaut.
+      - EXTRA_PARAMS=
+
+      # Serveur en mode PVE (True) ou PVP (False)
+      - ServerPVE=True
+
+      # Affiche les dégâts au-dessus de la cible visée
+      - ShowFloatingDamageText=True
+
+      # Multiplicateur d'expérience gagnée par joueurs, tribus et dinos
+      - XPMultiplier=2.0
+
+      # Décalage de difficulté (influe sur le niveau max des créatures sauvages)
+      - DifficultyOffset=10
+
+      # Force la difficulté officielle du serveur (ex: 5 = créatures niveau 150)
+      - OverrideOfficialDifficulty=10
+
+      # Multiplicateur des dégâts infligés par les dinos
+      - DinoDamageMultiplier=1.0
+
+      # Multiplicateur de la vitesse d'apprivoisement
+      - TamingSpeedMultiplier=5.0
+
+      # Multiplicateur de ressources récoltées
+      - HarvestAmountMultiplier=1.0
+
+      # Multiplicateur de résistance des structures aux dégâts
+      - StructureResistanceMultiplier=1.0
+
+      # Autorise l'affichage des marqueurs de dégâts
+      - AllowHitMarkers=True
+
+      # Masque le réticule de visée par défaut
+      - bPreventCrosshair=True
+
+      # Masque les marqueurs de coup à l'écran
+      - bPreventHitMarkers=True
+
+      # Multiplicateur de vitesse d'éclosion des œufs
+      - EggHatchSpeedMultiplier=10.0
+
+      # Multiplicateur de vitesse de croissance des bébés dinos
+      - BabyMatureSpeedMultiplier=10.0
+
+      # Intervalle entre deux câlins nécessaires pour les bébés dinos
+      - BabyCuddleIntervalMultiplier=0.5
+
+      # Multiplicateur du nombre de dinos présents sur la carte
+      - DinoCountMultiplier=2.0
+
+      # Autorise les volants à transporter joueurs/dinos en mode PvE
+      - AllowFlyerCarryPvE=True
+
+      # Nombre maximum de dinos apprivoisés sur le serveur
+      - MaxTamedDinos=5000
+
+      # Affiche la position du joueur sur la carte
+      - ShowMapPlayerLocation=True
+
+      # Autorise la vue à la troisième personne
+      - AllowThirdPersonPlayer=True
+
+      # Affiche le réticule de visée du serveur
+      - ServerCrosshair=True
+
+      # Nombre maximum de structures autorisées dans une zone donnée
+      - TheMaxStructuresInRange=10500
+
+      # Heure de démarrage du cycle jour/nuit (-1 = aléatoire)
+      - StartTimeHour=-1
+
+      # Multiplicateur de vitesse de nage / consommation d'oxygène
+      - OxygenSwimSpeedStatMultiplier=1
+
+      # Multiplicateur du rayon empêchant la pose de structures près des ressources
+      - StructurePreventResourceRadiusMultiplier=1
+
+      # Délai (en jours) avant de pouvoir renommer sa tribu à nouveau
+      - TribeNameChangeCooldown=15
+
+      # Multiplicateur de zone constructible sur les plateformes/selles
+      - PlatformSaddleBuildAreaBoundsMultiplier=1
+
+      # Autorise toujours le ramassage des structures posées
+      - AlwaysAllowStructurePickup=True
+
+      # Délai (secondes) pendant lequel une structure reste ramassable après pose
+      - StructurePickupTimeAfterPlacement=30
+
+      # Durée (secondes) de maintien du clic pour ramasser une structure
+      - StructurePickupHoldDuration=0.5
+
+      # Masque la source des dégâts dans les journaux serveur
+      - AllowHideDamageSourceFromLogs=True
+
+      # Multiplicateur de consommation de nourriture des dinos pendant un raid
+      - RaidDinoCharacterFoodDrainMultiplier=1
+
+      # Multiplicateur de vitesse de décomposition des dinos PvE non réclamés
+      - PvEDinoDecayPeriodMultiplier=1
+
+      # Délai (secondes) avant expulsion automatique d'un joueur inactif
+      - KickIdlePlayersPeriod=3600
+
+      # Multiplicateur du nombre max de structures autorisées par plateforme
+      - PerPlatformMaxStructuresMultiplier=1
+
+      # Intervalle (minutes) entre deux sauvegardes automatiques
+      - AutoSavePeriodMinutes=30
+
+      # Limite "douce" de dinos apprivoisés avant nettoyage automatique
+      - MaxTamedDinos_SoftTameLimit=5000
+
+      # Délai (secondes) avant suppression des dinos dépassant la limite douce
+      - MaxTamedDinos_SoftTameLimit_CountdownForDeletionDuration=604800
+
+      # Délai (secondes) avant révélation automatique des trésors enterrés
+      - OverrideSecondsUntilBuriedTreasureAutoReveals=1209600
+
+      # Multiplicateur de taille de pile d'objets dans l'inventaire
+      - ItemStackSizeMultiplier=1
+
+      # Taille du tampon de journal de jeu renvoyé par RCON
+      - RCONServerGameLogBuffer=600
+
+      # Délai (secondes) avant que le suicide par implant redevienne possible
+      - ImplantSuicideCD=28800
+    ports:
+      # Port de jeu (connexion des joueurs via le navigateur de serveurs)
+      - 0.0.0.0:${jeux1}:7777/udp
+      # Port RCON (administration à distance du serveur)
+      - 0.0.0.0:${rcon}:27020/tcp
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      # Fichiers du serveur (installés/mis à jour par SteamCMD dans start_server.sh)
+      - ${HOME}/volumes/ASA/filesServer:/home/steam/asa_server:rw
+      - ${HOME}/volumes/ASA/logs:/home/steam/asa_server/ShooterGame/Saved/Logs:rw
+      - ${HOME}/volumes/ASA/cluster-shared:/home/steam/asa_server/ShooterGame/Binaries/Win64/cluster-shared:rw
+      # Dossier Steam et préfixe Proton (Wine), propres à cette image (notre
+      # propre build, GE-Proton11-5) — séparés des fichiers de jeu ci-dessus
+      - ${HOME}/volumes/ASA-proton/steam:/home/steam/Steam:rw
+      - ${HOME}/volumes/ASA-proton/proton-prefix:/home/steam/proton-prefix:rw
+      # SteamCMD partagé avec tous les autres serveurs de jeux (évite un re-téléchargement)
+      - ${HOME}/volumes/steamcmd:/home/steam/steamcmd:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+
+networks:
+  asa-network:
+    attachable: true
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: 'asanet'

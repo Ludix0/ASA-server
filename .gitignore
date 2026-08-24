@@ -1,0 +1,5 @@
+.env
+*.env
+.actif
+description.txt
+*.swp

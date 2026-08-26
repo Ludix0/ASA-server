@@ -145,6 +145,20 @@ docker compose up -d
 | `ItemStackSizeMultiplier` | `1` | Inventory item stack size multiplier |
 | `RCONServerGameLogBuffer` | `600` | RCON game log buffer size |
 | `ImplantSuicideCD` | `28800` | Cooldown before implant suicide is possible again |
+| `DisableCryopodFridgeRequirement` | `True` | Deploy/recall cryopodded dinos without a nearby Cryofridge |
+| `AllowCryoFridgeOnSaddle` | `True` | Allow building a Cryofridge on a platform saddle (mobile base) |
+| `DisableCryopodEnemyCheck` | `True` | Ignore the nearby-enemy check when using cryopods (mainly relevant in PvP) |
+
+**Seasonal events** — on ARK: Survival Ascended, seasonal events are real CurseForge mods published by `StudioWildcardMods`, not a simple flag. Each is added to `MODS` automatically while today's date falls within its window. `<NAME>_DATE` accepts a `MM/DD-MM/DD` range and can wrap around New Year (e.g. Winter Wonderland); set `<NAME>=False` to disable one event entirely.
+
+| Variable | Default | Mod ID | Default date range |
+|---|---|---|---|
+| `LOVE_ASCENDED` / `LOVE_ASCENDED_DATE` | `True` / `02/11-02/18` | `927084` | Official 2026 dates |
+| `EGGCELLENT_ADVENTURE` / `EGGCELLENT_ADVENTURE_DATE` | `True` / `03/31-04/14` | `877745` | Official 2026 dates |
+| `SUMMER_BASH` / `SUMMER_BASH_DATE` | `True` / `07/01-07/21` | `927091` | Approximate — adjust once official dates are known |
+| `FEAR_ASCENDED` / `FEAR_ASCENDED_DATE` | `True` / `10/01-10/31` | `877752` | Approximate — adjust once official dates are known |
+| `TURKEY_TRIAL` / `TURKEY_TRIAL_DATE` | `True` / `11/20-11/30` | `927083` | Approximate — adjust once official dates are known |
+| `WINTER_WONDERLAND` / `WINTER_WONDERLAND_DATE` | `True` / `12/10-01/10` | `927090` | Approximate — adjust once official dates are known |
 
 ### Volumes
 
@@ -307,6 +321,20 @@ docker compose up -d
 | `ItemStackSizeMultiplier` | `1` | Multiplicateur de taille de pile d'objets |
 | `RCONServerGameLogBuffer` | `600` | Taille du tampon de journal RCON |
 | `ImplantSuicideCD` | `28800` | Délai avant nouveau suicide par implant |
+| `DisableCryopodFridgeRequirement` | `True` | Déploie/rappelle les dinos cryopodés sans Cryofridge à proximité |
+| `AllowCryoFridgeOnSaddle` | `True` | Autorise à construire un Cryofridge sur une selle de plateforme (base mobile) |
+| `DisableCryopodEnemyCheck` | `True` | Ignore la vérification de présence ennemie à l'usage des cryopods (surtout utile en PvP) |
+
+**Événements saisonniers** — sur ARK: Survival Ascended, les événements saisonniers sont de vrais mods CurseForge publiés par `StudioWildcardMods`, pas un simple réglage. Chacun est ajouté automatiquement à `MODS` tant que la date du jour tombe dans sa période. `<NOM>_DATE` accepte une plage `MM/JJ-MM/JJ`, qui peut traverser le 1er janvier (ex. Winter Wonderland) ; mettre `<NOM>=False` pour désactiver un événement.
+
+| Variable | Défaut | ID du mod | Plage de dates par défaut |
+|---|---|---|---|
+| `LOVE_ASCENDED` / `LOVE_ASCENDED_DATE` | `True` / `02/11-02/18` | `927084` | Dates officielles 2026 |
+| `EGGCELLENT_ADVENTURE` / `EGGCELLENT_ADVENTURE_DATE` | `True` / `03/31-04/14` | `877745` | Dates officielles 2026 |
+| `SUMMER_BASH` / `SUMMER_BASH_DATE` | `True` / `07/01-07/21` | `927091` | Approximative — à ajuster une fois les dates officielles connues |
+| `FEAR_ASCENDED` / `FEAR_ASCENDED_DATE` | `True` / `10/01-10/31` | `877752` | Approximative — à ajuster une fois les dates officielles connues |
+| `TURKEY_TRIAL` / `TURKEY_TRIAL_DATE` | `True` / `11/20-11/30` | `927083` | Approximative — à ajuster une fois les dates officielles connues |
+| `WINTER_WONDERLAND` / `WINTER_WONDERLAND_DATE` | `True` / `12/10-01/10` | `927090` | Approximative — à ajuster une fois les dates officielles connues |
 
 ### Volumes
 

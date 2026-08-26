@@ -39,6 +39,23 @@ Conséquences directement dans le code, à ne pas "simplifier" sans comprendre p
 - Ports hôte : `${jeux1}` (jeu, UDP) et `${rcon}` (RCON, TCP), tous deux issus du `.env` partagé (`~/volumes/secrets/steam-account.env`), pas de valeurs en dur.
 - Réglages de gameplay (une quarantaine de variables : XP, taming, harvest, structures, etc.) tous câblés en valeurs fixes dans `docker-compose.yml`, commentés en français ligne par ligne — c'est la source de vérité, `README.md` en reprend la liste mais toute modification de valeur se fait dans `docker-compose.yml`.
 
+## Cryopods hors base et événements saisonniers automatiques
+
+- **Cryopods utilisables loin de la base** : trois réglages dans `docker-compose.yml`/`start_server.sh` — `DisableCryopodFridgeRequirement=True` (déploiement/rappel sans Cryofridge à proximité), `AllowCryoFridgeOnSaddle=True` (Cryofridge constructible sur une selle de plateforme — reste utile car un Cryofridge est toujours nécessaire pour **fabriquer/recharger** les cryopods, ce que `DisableCryopodFridgeRequirement` ne change pas), `DisableCryopodEnemyCheck=True` (ignore la présence ennemie à proximité — surtout utile en PvP, notre serveur étant en `ServerPVE=True`).
+
+- **Événements saisonniers ajoutés automatiquement à `MODS`** : sur ASA (contrairement à l'ancien ASE), les événements (Winter Wonderland, Love Ascended, etc.) sont distribués comme de vrais mods CurseForge du studio `StudioWildcardMods` — pas de simple flag `-ActiveEvent=`. Dans `start_server.sh`, les fonctions `jour_dans_plage` et `construire_mods_evenements` comparent la date du jour aux variables `<NOM>_DATE=MM/JJ-MM/JJ` de `docker-compose.yml` et ajoutent l'ID CurseForge correspondant à `MODS` pendant la période, sans toucher aux mods perso de Ludo. Piloté par `<NOM>=True/False` + `<NOM>_DATE` pour chacun de :
+
+  | Événement | ID CurseForge | Variable |
+  |---|---|---|
+  | Love Ascended | 927084 | `LOVE_ASCENDED` |
+  | Eggcellent Adventure | 877745 | `EGGCELLENT_ADVENTURE` |
+  | Summer Bash | 927091 | `SUMMER_BASH` |
+  | Fear Ascended | 877752 | `FEAR_ASCENDED` |
+  | Turkey Trial | 927083 | `TURKEY_TRIAL` |
+  | Winter Wonderland | 927090 | `WINTER_WONDERLAND` |
+
+  IDs vérifiés directement sur les pages CurseForge (2026-08-26). Pas de mod "Anniversary" trouvé sur CurseForge pour ASA — événement volontairement absent de la liste. Les dates par défaut sont approximatives (sauf Love Ascended et Eggcellent Adventure, dates officielles 2026 confirmées) — à corriger chaque année directement dans `docker-compose.yml`, pas dans le script.
+
 ## Réseau (contexte [[infrastructure]])
 
 Ce serveur appartient au réseau **Jeux vidéo** de Ludo (`192.168.3.0/24`), volontairement ouvert vers l'extérieur. Les ports `${jeux1}` et `${rcon}` sont donc potentiellement exposés à internet via pfSense — la sécurité de ce conteneur (pas de root, `BattlEye` mis à part) compte à ce titre. RCON en particulier ne doit jamais être exposé sans protection supplémentaire côté pare-feu si ce n'est pas déjà le cas.

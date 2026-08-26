@@ -185,6 +185,42 @@ services:
 
       # Délai (secondes) avant que le suicide par implant redevienne possible
       - ImplantSuicideCD=28800
+
+      # --- Cryopods utilisables loin de la base ---
+      # Autorise à décrypter/rappeler un dino cryopodé sans être près d'un Cryofridge
+      # (le Cryofridge reste nécessaire pour fabriquer/recharger les cryopods eux-mêmes)
+      - DisableCryopodFridgeRequirement=True
+
+      # Autorise à construire un Cryofridge sur une selle de plateforme (base mobile)
+      - AllowCryoFridgeOnSaddle=True
+
+      # Ignore la vérification de présence ennemie à proximité (surtout utile en PvP)
+      - DisableCryopodEnemyCheck=True
+
+
+      # --- Événements saisonniers automatiques (logique dans start_server.sh) ---
+      # Pour chaque événement : <NOM>=True/False pour l'activer, <NOM>_DATE=MM/JJ-MM/JJ
+      # pour sa période. Le mod CurseForge correspondant est ajouté automatiquement
+      # à MODS pendant cette période, sans toucher aux mods que vous avez mis vous-même.
+      # Dates par défaut approximatives (sauf Love Ascended et Eggcellent Adventure,
+      # dates officielles 2026) — à corriger vous-même chaque année si besoin.
+      - LOVE_ASCENDED=True
+      - LOVE_ASCENDED_DATE=02/11-02/18
+
+      - EGGCELLENT_ADVENTURE=True
+      - EGGCELLENT_ADVENTURE_DATE=03/31-04/14
+
+      - SUMMER_BASH=True
+      - SUMMER_BASH_DATE=07/01-07/21
+
+      - FEAR_ASCENDED=True
+      - FEAR_ASCENDED_DATE=10/01-10/31
+
+      - TURKEY_TRIAL=True
+      - TURKEY_TRIAL_DATE=11/20-11/30
+
+      - WINTER_WONDERLAND=True
+      - WINTER_WONDERLAND_DATE=12/10-01/10
     ports:
       # Port de jeu (connexion des joueurs via le navigateur de serveurs)
       - 0.0.0.0:${jeux1}:7777/udp

@@ -119,9 +119,61 @@ construire_parametres_partie() {
         "ItemStackSizeMultiplier=${ItemStackSizeMultiplier:-1}"
         "RCONServerGameLogBuffer=${RCONServerGameLogBuffer:-600}"
         "ImplantSuicideCD=${ImplantSuicideCD:-28800}"
+        "DisableCryopodFridgeRequirement=${DisableCryopodFridgeRequirement:-True}"
+        "AllowCryoFridgeOnSaddle=${AllowCryoFridgeOnSaddle:-True}"
+        "DisableCryopodEnemyCheck=${DisableCryopodEnemyCheck:-True}"
     )
     local IFS='?'
     echo "${parametres[*]}"
+}
+
+# Vrai si la date du jour tombe dans une plage "MM/JJ-MM/JJ" (gère aussi les
+# plages qui traversent le 1er janvier, ex: Winter Wonderland décembre-janvier).
+jour_dans_plage() {
+    local plage="$1"
+    [ -z "$plage" ] && return 1
+    local debut="${plage%-*}"
+    local fin="${plage#*-}"
+    local jour_debut jour_fin jour_actuel
+    jour_debut=$(date -d "2000-${debut/\//-}" +%j) || return 1
+    jour_fin=$(date -d "2000-${fin/\//-}" +%j) || return 1
+    jour_actuel=$(date +%j)
+    jour_debut=$((10#$jour_debut))
+    jour_fin=$((10#$jour_fin))
+    jour_actuel=$((10#$jour_actuel))
+    if [ "$jour_debut" -le "$jour_fin" ]; then
+        [ "$jour_actuel" -ge "$jour_debut" ] && [ "$jour_actuel" -le "$jour_fin" ]
+    else
+        [ "$jour_actuel" -ge "$jour_debut" ] || [ "$jour_actuel" -le "$jour_fin" ]
+    fi
+}
+
+# Événements saisonniers officiels ARK (mods CurseForge StudioWildcardMods),
+# ajoutés automatiquement à MODS quand on est dans leur période — pilotés par
+# les variables <NOM>/<NOM>_DATE définies dans docker-compose.yml.
+construire_mods_evenements() {
+    local evenements=(
+        "LOVE_ASCENDED:927084"
+        "EGGCELLENT_ADVENTURE:877745"
+        "SUMMER_BASH:927091"
+        "FEAR_ASCENDED:877752"
+        "TURKEY_TRIAL:927083"
+        "WINTER_WONDERLAND:927090"
+    )
+    local mods_evenements=""
+    local entree nom_variable id_mod activee plage_var plage
+    for entree in "${evenements[@]}"; do
+        nom_variable="${entree%%:*}"
+        id_mod="${entree##*:}"
+        activee="${!nom_variable}"
+        [ -z "$activee" ] && activee="True"
+        plage_var="${nom_variable}_DATE"
+        plage="${!plage_var}"
+        if [ "$activee" = "True" ] && jour_dans_plage "$plage"; then
+            mods_evenements="${mods_evenements:+$mods_evenements,}$id_mod"
+        fi
+    done
+    echo "$mods_evenements"
 }
 
 # Partie "options de lancement" (drapeaux -NoBattlEye, cluster, mods...) de
@@ -135,9 +187,15 @@ construire_options_lancement() {
     if [ "${NoBattlEye:-True}" = "True" ]; then
         options="$options -NoBattlEye"
     fi
-    # Mods optionnels : liste d'identifiants CurseForge séparés par des virgules
-    if [ -n "$MODS" ]; then
-        options="$options -mods=${MODS}"
+    # Mods optionnels : liste d'identifiants CurseForge séparés par des virgules,
+    # complétée automatiquement par les mods d'événements saisonniers en cours
+    local mods_evenements="$(construire_mods_evenements)"
+    local tous_mods="$MODS"
+    if [ -n "$mods_evenements" ]; then
+        tous_mods="${tous_mods:+$tous_mods,}$mods_evenements"
+    fi
+    if [ -n "$tous_mods" ]; then
+        options="$options -mods=${tous_mods}"
     fi
     # Paramètres libres, ajoutés tels quels (voir EXTRA_PARAMS dans docker-compose.yml)
     if [ -n "$EXTRA_PARAMS" ]; then

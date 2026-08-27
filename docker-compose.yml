@@ -202,24 +202,46 @@ services:
       # Pour chaque événement : <NOM>=True/False pour l'activer, <NOM>_DATE=MM/JJ-MM/JJ
       # pour sa période. Le mod CurseForge correspondant est ajouté automatiquement
       # à MODS pendant cette période, sans toucher aux mods que vous avez mis vous-même.
+      # <NOM>_COLORS=True/False est indépendant du mod : il applique en plus, pendant
+      # la même période <NOM>_DATE, la palette de couleurs saisonnière sur les dinos
+      # sauvages (paramètre -ActiveEvent=..., un seul actif à la fois). Utile pour
+      # avoir les couleurs sans le mod complet, ou l'inverse. Les dinos déjà présents
+      # gardent leur ancienne couleur tant qu'ils ne meurent pas : <NOM>_DESTROY_WILD_DINOS=True
+      # envoie automatiquement "DestroyWildDinos" par RCON au démarrage du conteneur
+      # si cet événement couleur est actif, pour forcer leur renouvellement immédiat.
+      # Désactivé par défaut (False) : c'est plus radical que les autres réglages
+      # (ça tue TOUS les dinos sauvages de la carte, pas seulement leur couleur) —
+      # à activer explicitement événement par événement si vous le voulez.
       # Dates par défaut approximatives (sauf Love Ascended et Eggcellent Adventure,
       # dates officielles 2026) — à corriger vous-même chaque année si besoin.
       - LOVE_ASCENDED=True
+      - LOVE_ASCENDED_COLORS=True
+      - LOVE_ASCENDED_DESTROY_WILD_DINOS=False
       - LOVE_ASCENDED_DATE=02/11-02/18
 
       - EGGCELLENT_ADVENTURE=True
+      - EGGCELLENT_ADVENTURE_COLORS=True
+      - EGGCELLENT_ADVENTURE_DESTROY_WILD_DINOS=False
       - EGGCELLENT_ADVENTURE_DATE=03/31-04/14
 
       - SUMMER_BASH=True
+      - SUMMER_BASH_COLORS=True
+      - SUMMER_BASH_DESTROY_WILD_DINOS=False
       - SUMMER_BASH_DATE=07/01-07/21
 
       - FEAR_ASCENDED=True
+      - FEAR_ASCENDED_COLORS=True
+      - FEAR_ASCENDED_DESTROY_WILD_DINOS=False
       - FEAR_ASCENDED_DATE=10/01-10/31
 
       - TURKEY_TRIAL=True
+      - TURKEY_TRIAL_COLORS=True
+      - TURKEY_TRIAL_DESTROY_WILD_DINOS=False
       - TURKEY_TRIAL_DATE=11/20-11/30
 
       - WINTER_WONDERLAND=True
+      - WINTER_WONDERLAND_COLORS=True
+      - WINTER_WONDERLAND_DESTROY_WILD_DINOS=False
       - WINTER_WONDERLAND_DATE=12/10-01/10
     ports:
       # Port de jeu (connexion des joueurs via le navigateur de serveurs)

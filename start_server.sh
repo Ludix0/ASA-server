@@ -176,6 +176,123 @@ construire_mods_evenements() {
     echo "$mods_evenements"
 }
 
+# Correspondance entre nos noms de variables et le nom accepté par le
+# paramètre -ActiveEvent= d'ARK (force la palette de couleurs saisonnière sur
+# les dinos sauvages, indépendamment du mod CurseForge). Un seul actif à la
+# fois : on s'arrête au premier événement trouvé dont <NOM>_COLORS=True et
+# dont la date du jour tombe dans <NOM>_DATE.
+#
+# Renseigne EVENT_COULEUR_ACTUEL (nom pour -ActiveEvent=) et
+# EVENT_COULEUR_NOM_VARIABLE (notre nom de variable, ex: WINTER_WONDERLAND)
+# via des variables globales plutôt qu'un echo : cette fonction est aussi
+# appelée sans "$(...)" pour retrouver <NOM>_DESTROY_WILD_DINOS plus loin, et
+# "$(...)" exécuterait la fonction dans un sous-shell qui perdrait ces valeurs.
+EVENT_COULEUR_ACTUEL=""
+EVENT_COULEUR_NOM_VARIABLE=""
+determiner_event_couleur_actif() {
+    EVENT_COULEUR_ACTUEL=""
+    EVENT_COULEUR_NOM_VARIABLE=""
+    local evenements=(
+        "LOVE_ASCENDED:LoveEvolved"
+        "EGGCELLENT_ADVENTURE:Easter"
+        "SUMMER_BASH:SummerBash"
+        "FEAR_ASCENDED:FearEvolved"
+        "TURKEY_TRIAL:TurkeyTrial"
+        "WINTER_WONDERLAND:WinterWonderland"
+    )
+    local entree nom_variable nom_active_event activee_var activee plage_var plage
+    for entree in "${evenements[@]}"; do
+        nom_variable="${entree%%:*}"
+        nom_active_event="${entree##*:}"
+        activee_var="${nom_variable}_COLORS"
+        activee="${!activee_var}"
+        [ -z "$activee" ] && activee="True"
+        plage_var="${nom_variable}_DATE"
+        plage="${!plage_var}"
+        if [ "$activee" = "True" ] && jour_dans_plage "$plage"; then
+            EVENT_COULEUR_ACTUEL="$nom_active_event"
+            EVENT_COULEUR_NOM_VARIABLE="$nom_variable"
+            return
+        fi
+    done
+}
+
+# Client RCON minimal (protocole Source RCON, celui qu'utilise ARK) en Python,
+# pour éviter d'installer un paquet supplémentaire dans l'image (python3 est
+# déjà présent pour le lanceur de Proton). Usage : rcon_exec "DestroyWildDinos"
+rcon_exec() {
+    local commande="$1"
+    python3 - "127.0.0.1" "${RCONPort}" "${ASA_ADMIN_PASSWORD}" "$commande" <<'EOF_PY'
+import socket
+import struct
+import sys
+
+
+def recevoir_tout(sock, taille):
+    donnees = b""
+    while len(donnees) < taille:
+        morceau = sock.recv(taille - len(donnees))
+        if not morceau:
+            raise ConnectionError("connexion RCON fermée prématurément")
+        donnees += morceau
+    return donnees
+
+
+def envoyer_paquet(sock, id_, type_, corps):
+    charge = struct.pack("<ii", id_, type_) + corps.encode() + b"\x00\x00"
+    sock.sendall(struct.pack("<i", len(charge)) + charge)
+
+
+def lire_paquet(sock):
+    taille = struct.unpack("<i", recevoir_tout(sock, 4))[0]
+    charge = recevoir_tout(sock, taille)
+    id_, type_ = struct.unpack("<ii", charge[:8])
+    corps = charge[8:-2].decode(errors="replace")
+    return id_, type_, corps
+
+
+hote, port, mot_de_passe, commande = sys.argv[1:5]
+sock = socket.create_connection((hote, int(port)), timeout=10)
+envoyer_paquet(sock, 1, 3, mot_de_passe)
+id_auth, _, _ = lire_paquet(sock)
+if id_auth == -1:
+    print("Authentification RCON refusée", file=sys.stderr)
+    sys.exit(1)
+envoyer_paquet(sock, 2, 2, commande)
+_, _, reponse = lire_paquet(sock)
+print(reponse)
+EOF_PY
+}
+
+# Si l'événement couleur actif a <NOM>_DESTROY_WILD_DINOS=True, envoie
+# "DestroyWildDinos" par RCON dès que celui-ci répond, pour renouveler
+# immédiatement la couleur des dinos sauvages déjà présents sur la carte
+# (sinon ils la gardent tant qu'ils ne meurent pas naturellement). Lancée en
+# arrière-plan (voir plus bas) : ne doit jamais bloquer le démarrage du jeu.
+detruire_dinos_sauvages_si_demande() {
+    determiner_event_couleur_actif
+    local nom_variable="$EVENT_COULEUR_NOM_VARIABLE"
+    [ -z "$nom_variable" ] && return
+    local destroy_var="${nom_variable}_DESTROY_WILD_DINOS"
+    [ "${!destroy_var}" = "True" ] || return
+
+    echo "--- ${EVENT_COULEUR_ACTUEL} actif avec DESTROY_WILD_DINOS=True : attente du RCON ---"
+    local tentatives=60
+    while [ $tentatives -gt 0 ]; do
+        if (echo > "/dev/tcp/127.0.0.1/${RCONPort}") 2>/dev/null; then
+            # Laisse le temps au monde de finir de spawner les dinos avant de
+            # les détruire (le RCON répond parfois avant la fin du chargement).
+            sleep 30
+            echo "--- Envoi de DestroyWildDinos par RCON ---"
+            rcon_exec "DestroyWildDinos"
+            return
+        fi
+        sleep 5
+        tentatives=$((tentatives - 1))
+    done
+    echo "--- RCON resté indisponible, DestroyWildDinos non envoyé ---" >&2
+}
+
 # Partie "options de lancement" (drapeaux -NoBattlEye, cluster, mods...) de
 # ASA_START_PARAMS, séparée par des espaces.
 construire_options_lancement() {
@@ -196,6 +313,12 @@ construire_options_lancement() {
     fi
     if [ -n "$tous_mods" ]; then
         options="$options -mods=${tous_mods}"
+    fi
+    # Couleur d'événement saisonnier sur les dinos sauvages, indépendante du
+    # mod CurseForge — pilotée par <NOM>_COLORS dans docker-compose.yml
+    determiner_event_couleur_actif
+    if [ -n "$EVENT_COULEUR_ACTUEL" ]; then
+        options="$options -ActiveEvent=${EVENT_COULEUR_ACTUEL}"
     fi
     # Paramètres libres, ajoutés tels quels (voir EXTRA_PARAMS dans docker-compose.yml)
     if [ -n "$EXTRA_PARAMS" ]; then
@@ -222,6 +345,11 @@ echo "--- Lancement : ArkAscendedServer.exe ${ASA_START_PARAMS} ---"
 # log du jeu en plus de sa sortie standard directe (voir plus bas).
 gosu steam "${PROTON_DIR}/proton" run ArkAscendedServer.exe ${ASA_START_PARAMS} &
 GAME_PID=$!
+
+# En arrière-plan, sans bloquer le démarrage du jeu : renouvelle les dinos
+# sauvages par RCON si l'événement couleur actif le demande (voir
+# détruire_dinos_sauvages_si_demande, pilotée par <NOM>_DESTROY_WILD_DINOS).
+detruire_dinos_sauvages_si_demande &
 
 # Relaie un arrêt propre du conteneur (docker compose down/stop) vers le
 # vrai processus du jeu, plutôt que de le laisser être tué brutalement.

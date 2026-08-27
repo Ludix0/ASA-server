@@ -160,6 +160,19 @@ docker compose up -d
 | `TURKEY_TRIAL` / `TURKEY_TRIAL_DATE` | `True` / `11/20-11/30` | `927083` | Approximate — adjust once official dates are known |
 | `WINTER_WONDERLAND` / `WINTER_WONDERLAND_DATE` | `True` / `12/10-01/10` | `927090` | Approximate — adjust once official dates are known |
 
+Each event also has an independent `<NAME>_COLORS` toggle (default `True`), separate from the mod toggle above. When `True` and today falls within `<NAME>_DATE`, it adds `-ActiveEvent=<...>` to the launch options, which forces the seasonal color palette onto wild dinos — with or without the CurseForge mod also enabled. Only one can be active at a time.
+
+| Variable | `-ActiveEvent=` value |
+|---|---|
+| `LOVE_ASCENDED_COLORS` | `LoveEvolved` |
+| `EGGCELLENT_ADVENTURE_COLORS` | `Easter` |
+| `SUMMER_BASH_COLORS` | `SummerBash` |
+| `FEAR_ASCENDED_COLORS` | `FearEvolved` |
+| `TURKEY_TRIAL_COLORS` | `TurkeyTrial` |
+| `WINTER_WONDERLAND_COLORS` | `WinterWonderland` |
+
+Already-spawned wild dinos keep their old colors until they die — a full refresh happens only gradually as players hunt. Each event has one more independent toggle, `<NAME>_DESTROY_WILD_DINOS` (default `False`, since it kills every wild dino on the map, not just recolors them): when `True` and the event is active, `start_server.sh` waits for RCON to come up after the container starts, then sends `DestroyWildDinos` automatically via a small built-in Source RCON client (no extra package — reuses the `python3` already installed for the Proton launcher). Runs once per container start, in the background, without blocking the game.
+
 ### Volumes
 
 | Host volume | Container path | Content |
@@ -335,6 +348,19 @@ docker compose up -d
 | `FEAR_ASCENDED` / `FEAR_ASCENDED_DATE` | `True` / `10/01-10/31` | `877752` | Approximative — à ajuster une fois les dates officielles connues |
 | `TURKEY_TRIAL` / `TURKEY_TRIAL_DATE` | `True` / `11/20-11/30` | `927083` | Approximative — à ajuster une fois les dates officielles connues |
 | `WINTER_WONDERLAND` / `WINTER_WONDERLAND_DATE` | `True` / `12/10-01/10` | `927090` | Approximative — à ajuster une fois les dates officielles connues |
+
+Chaque événement dispose aussi d'un interrupteur `<NOM>_COLORS` indépendant (défaut `True`), séparé de l'interrupteur du mod ci-dessus. Quand il vaut `True` et que la date du jour tombe dans `<NOM>_DATE`, il ajoute `-ActiveEvent=<...>` aux options de lancement, ce qui force la palette de couleurs saisonnière sur les dinos sauvages — avec ou sans le mod CurseForge activé en plus. Un seul actif à la fois.
+
+| Variable | Valeur `-ActiveEvent=` |
+|---|---|
+| `LOVE_ASCENDED_COLORS` | `LoveEvolved` |
+| `EGGCELLENT_ADVENTURE_COLORS` | `Easter` |
+| `SUMMER_BASH_COLORS` | `SummerBash` |
+| `FEAR_ASCENDED_COLORS` | `FearEvolved` |
+| `TURKEY_TRIAL_COLORS` | `TurkeyTrial` |
+| `WINTER_WONDERLAND_COLORS` | `WinterWonderland` |
+
+Les dinos sauvages déjà présents gardent leur ancienne couleur tant qu'ils ne meurent pas — le renouvellement complet ne se fait que progressivement, au rythme de la chasse des joueurs. Chaque événement dispose d'un interrupteur supplémentaire indépendant, `<NOM>_DESTROY_WILD_DINOS` (défaut `False`, car ça tue tous les dinos sauvages de la carte, pas seulement leur couleur) : quand il vaut `True` et que l'événement est actif, `start_server.sh` attend que le RCON réponde après le démarrage du conteneur, puis envoie automatiquement `DestroyWildDinos` via un petit client RCON (protocole Source RCON) écrit en Python et intégré au script — pas de paquet supplémentaire, `python3` est déjà présent pour le lanceur Proton. Se déclenche une fois par démarrage du conteneur, en arrière-plan, sans bloquer le lancement du jeu.
 
 ### Volumes
 

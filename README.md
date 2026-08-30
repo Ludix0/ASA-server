@@ -173,21 +173,21 @@ Each event also has an independent `<NAME>_COLORS` toggle (default `True`), sepa
 
 Already-spawned wild dinos keep their old colors until they die — a full refresh happens only gradually as players hunt. Each event has one more independent toggle, `<NAME>_DESTROY_WILD_DINOS` (default `False`, since it kills every wild dino on the map, not just recolors them): when `True` and the event is active, `start_server.sh` waits for RCON to come up after the container starts, then sends `DestroyWildDinos` automatically via a small built-in Source RCON client (no extra package — reuses the `python3` already installed for the Proton launcher). Runs once per container start, in the background, without blocking the game.
 
-**Game.ini settings** — `GameUserSettings.ini` (launch parameters + cryopods above) isn't the only ARK config file: these settings live in `Game.ini` (`[/script/shootergame.shootergamemode]`) and aren't readable from launch parameters at all. `start_server.sh` writes them directly into the file at container start. All default to ARK's stock values — no behavior changes until you edit them.
+**Game.ini settings** — separate from `GameUserSettings.ini` above, `Game.ini` (`[/script/shootergame.shootergamemode]`) isn't readable from launch parameters at all; `start_server.sh` writes it at container start. All default to ARK's stock values — no change until edited.
 
 | Variable | Default | Description |
 |---|---|---|
-| `bDisableFriendlyFire` | `False` | Disable damage between tribe members |
-| `bPvEDisableFriendlyFire` | `False` | Same, specifically on PvE servers (our case) |
-| `bAutoPvETimer` | `False` | Scheduled PvP windows on a PvE server (no effect here — server is fully PvE) |
-| `PreventOfflinePvPConnectionInvincibleInterval` | `5` | Invincibility seconds after reconnecting, for PvP raid protection (no effect here) |
-| `GenericXPMultiplier` | `1.0` | Generic XP multiplier, stacks with `XPMultiplier` above |
+| `bDisableFriendlyFire` | `False` | Disable friendly fire |
+| `bPvEDisableFriendlyFire` | `False` | Same, on PvE servers (our case) |
+| `bAutoPvETimer` | `False` | Scheduled PvP windows on PvE (no effect here) |
+| `PreventOfflinePvPConnectionInvincibleInterval` | `5` | Reconnect invincibility, PvP raid protection (no effect here) |
+| `GenericXPMultiplier` | `1.0` | Generic XP multiplier, stacks with `XPMultiplier` |
 | `KillXPMultiplier` | `1.0` | XP multiplier for kills |
 | `CraftXPMultiplier` | `1.0` | XP multiplier for crafting |
 | `HarvestXPMultiplier` | `1.0` | XP multiplier for harvesting |
-| `bDisableDinoTaming` | `False` | Disable taming wild creatures entirely |
-| `bDisableDinoRiding` | `False` | Disable riding dinos (tamed or wild) |
-| `bDisableDinoBreeding` | `False` | Disable breeding of tamed dinos |
+| `bDisableDinoTaming` | `False` | Disable wild-creature taming |
+| `bDisableDinoRiding` | `False` | Disable riding |
+| `bDisableDinoBreeding` | `False` | Disable dino breeding |
 
 ### Volumes
 
@@ -378,20 +378,20 @@ Chaque événement dispose aussi d'un interrupteur `<NOM>_COLORS` indépendant (
 
 Les dinos sauvages déjà présents gardent leur ancienne couleur tant qu'ils ne meurent pas — le renouvellement complet ne se fait que progressivement, au rythme de la chasse des joueurs. Chaque événement dispose d'un interrupteur supplémentaire indépendant, `<NOM>_DESTROY_WILD_DINOS` (défaut `False`, car ça tue tous les dinos sauvages de la carte, pas seulement leur couleur) : quand il vaut `True` et que l'événement est actif, `start_server.sh` attend que le RCON réponde après le démarrage du conteneur, puis envoie automatiquement `DestroyWildDinos` via un petit client RCON (protocole Source RCON) écrit en Python et intégré au script — pas de paquet supplémentaire, `python3` est déjà présent pour le lanceur Proton. Se déclenche une fois par démarrage du conteneur, en arrière-plan, sans bloquer le lancement du jeu.
 
-**Réglages Game.ini** — `GameUserSettings.ini` (paramètres de lancement + cryopods ci-dessus) n'est pas le seul fichier de configuration d'ARK : ces réglages vivent dans `Game.ini` (`[/script/shootergame.shootergamemode]`) et ne sont pas du tout lisibles depuis les paramètres de lancement. `start_server.sh` les écrit directement dans le fichier au démarrage du conteneur. Tous sont à la valeur par défaut d'ARK — aucun changement de comportement tant que vous ne les modifiez pas.
+**Réglages Game.ini** — distinct de `GameUserSettings.ini` ci-dessus, `Game.ini` (`[/script/shootergame.shootergamemode]`) n'est pas du tout lisible depuis les paramètres de lancement ; `start_server.sh` l'écrit au démarrage du conteneur. Tous à la valeur par défaut d'ARK — aucun changement tant qu'ils ne sont pas modifiés.
 
 | Variable | Défaut | Description |
 |---|---|---|
-| `bDisableFriendlyFire` | `False` | Désactive les dégâts entre membres d'une même tribu |
-| `bPvEDisableFriendlyFire` | `False` | Idem, spécifiquement sur un serveur PvE (notre cas) |
-| `bAutoPvETimer` | `False` | Fenêtres PvP programmées sur un serveur PvE (sans effet ici, serveur intégralement PvE) |
-| `PreventOfflinePvPConnectionInvincibleInterval` | `5` | Secondes d'invincibilité après reconnexion, protection anti-raid PvP (sans effet ici) |
-| `GenericXPMultiplier` | `1.0` | Multiplicateur d'XP générique, cumulatif avec `XPMultiplier` ci-dessus |
+| `bDisableFriendlyFire` | `False` | Désactive les dégâts entre membres de tribu |
+| `bPvEDisableFriendlyFire` | `False` | Idem, sur un serveur PvE (notre cas) |
+| `bAutoPvETimer` | `False` | Fenêtres PvP programmées sur PvE (sans effet ici) |
+| `PreventOfflinePvPConnectionInvincibleInterval` | `5` | Invincibilité après reconnexion, anti-raid PvP (sans effet ici) |
+| `GenericXPMultiplier` | `1.0` | Multiplicateur d'XP générique, cumulatif avec `XPMultiplier` |
 | `KillXPMultiplier` | `1.0` | Multiplicateur d'XP gagnée en tuant |
 | `CraftXPMultiplier` | `1.0` | Multiplicateur d'XP gagnée en fabriquant |
 | `HarvestXPMultiplier` | `1.0` | Multiplicateur d'XP gagnée en récoltant |
-| `bDisableDinoTaming` | `False` | Désactive complètement l'apprivoisement des créatures sauvages |
-| `bDisableDinoRiding` | `False` | Désactive la monte des dinos (apprivoisés ou sauvages) |
+| `bDisableDinoTaming` | `False` | Désactive l'apprivoisement des créatures sauvages |
+| `bDisableDinoRiding` | `False` | Désactive la monte |
 | `bDisableDinoBreeding` | `False` | Désactive la reproduction des dinos apprivoisés |
 
 ### Volumes

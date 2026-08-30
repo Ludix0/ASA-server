@@ -187,6 +187,8 @@ services:
       - ImplantSuicideCD=28800
 
       # --- Cryopods utilisables loin de la base ---
+      # (appliqué en écrivant GameUserSettings.ini au démarrage, voir start_server.sh :
+      # ARK ne lit pas ces 3 réglages depuis les paramètres de lancement classiques)
       # Autorise à décrypter/rappeler un dino cryopodé sans être près d'un Cryofridge
       # (le Cryofridge reste nécessaire pour fabriquer/recharger les cryopods eux-mêmes)
       - DisableCryopodFridgeRequirement=True
@@ -196,6 +198,47 @@ services:
 
       # Ignore la vérification de présence ennemie à proximité (surtout utile en PvP)
       - DisableCryopodEnemyCheck=True
+
+
+      # --- Game.ini (réglages absents des paramètres de lancement classiques,
+      # écrits directement dans Game.ini, section [/script/shootergame.shootergamemode],
+      # voir appliquer_reglages_game_ini() dans start_server.sh) ---
+
+      # Désactive les dégâts entre membres d'une même tribu (friendly fire)
+      - bDisableFriendlyFire=False
+
+      # Sur un serveur PvE (notre cas, ServerPVE=True) : désactive en plus les
+      # dégâts entre membres d'une même tribu spécifiquement en PvE
+      - bPvEDisableFriendlyFire=False
+
+      # Active des fenêtres PvP programmées sur un serveur PvE (sans effet ici,
+      # notre serveur étant intégralement en PvE via ServerPVE=True)
+      - bAutoPvETimer=False
+
+      # Délai d'invincibilité (secondes) après reconnexion, pour se protéger
+      # d'un raid en PvP (sans effet ici, notre serveur étant en PvE)
+      - PreventOfflinePvPConnectionInvincibleInterval=5
+
+      # Multiplicateur d'XP générique, cumulatif avec XPMultiplier ci-dessus
+      - GenericXPMultiplier=1.0
+
+      # Multiplicateur d'XP gagnée en tuant des créatures
+      - KillXPMultiplier=1.0
+
+      # Multiplicateur d'XP gagnée en fabriquant des objets
+      - CraftXPMultiplier=1.0
+
+      # Multiplicateur d'XP gagnée en récoltant des ressources
+      - HarvestXPMultiplier=1.0
+
+      # Désactive complètement l'apprivoisement des créatures sauvages
+      - bDisableDinoTaming=False
+
+      # Désactive la monte des dinos (apprivoisés ou sauvages)
+      - bDisableDinoRiding=False
+
+      # Désactive la reproduction des dinos apprivoisés
+      - bDisableDinoBreeding=False
 
 
       # --- Événements saisonniers automatiques (logique dans start_server.sh) ---

@@ -72,7 +72,6 @@ construire_parametres_partie() {
     local parametres=(
         "${map:-Valguero_WP}?listen"
         "ServerPassword=${ASA_SERVER_PASSWORD}"
-        "ServerAdminPassword=${ASA_ADMIN_PASSWORD}"
         "Port=${GAME_PORT}"
         "RCONPort=${RCONPort}"
         "RCONEnabled=True"
@@ -119,12 +118,60 @@ construire_parametres_partie() {
         "ItemStackSizeMultiplier=${ItemStackSizeMultiplier:-1}"
         "RCONServerGameLogBuffer=${RCONServerGameLogBuffer:-600}"
         "ImplantSuicideCD=${ImplantSuicideCD:-28800}"
-        "DisableCryopodFridgeRequirement=${DisableCryopodFridgeRequirement:-True}"
-        "AllowCryoFridgeOnSaddle=${AllowCryoFridgeOnSaddle:-True}"
-        "DisableCryopodEnemyCheck=${DisableCryopodEnemyCheck:-True}"
     )
     local IFS='?'
     echo "${parametres[*]}"
+}
+
+# Écrit (ou met à jour) une clé=valeur sous une section [Section] d'un fichier
+# .ini, en créant le fichier/la section si besoin. Idempotent : relancer le
+# conteneur remet juste la même valeur, ça ne duplique jamais la ligne.
+appliquer_reglage_ini() {
+    local fichier="$1" section="$2" cle="$3" valeur="$4"
+    mkdir -p "$(dirname "$fichier")"
+    touch "$fichier"
+    if ! grep -q "^\[${section}\]" "$fichier"; then
+        printf '\n[%s]\n' "$section" >> "$fichier"
+    fi
+    if grep -q "^${cle}=" "$fichier"; then
+        sed -i "s|^${cle}=.*|${cle}=${valeur}|" "$fichier"
+    else
+        # Délimiteur "|" (pas "/") pour l'adresse : certaines sections ARK
+        # (ex: Game.ini) contiennent des "/" dans leur nom.
+        sed -i "\\|^\\[${section}\\]|a ${cle}=${valeur}" "$fichier"
+    fi
+}
+
+# Réglages Cryopod : contrairement aux paramètres de "construire_parametres_partie"
+# ci-dessus (passés en "?clé=valeur" au lancement), ARK ne lit PAS ces trois-là
+# depuis la ligne de commande — ils doivent être écrits en dur dans
+# GameUserSettings.ini, section [ServerSettings], avant de lancer le jeu.
+appliquer_reglages_cryopod() {
+    local ini="${SERVER_DIR}/ShooterGame/Saved/Config/WindowsServer/GameUserSettings.ini"
+    appliquer_reglage_ini "$ini" "ServerSettings" "DisableCryopodFridgeRequirement" "${DisableCryopodFridgeRequirement:-True}"
+    appliquer_reglage_ini "$ini" "ServerSettings" "AllowCryoFridgeOnSaddle" "${AllowCryoFridgeOnSaddle:-True}"
+    appliquer_reglage_ini "$ini" "ServerSettings" "DisableCryopodEnemyCheck" "${DisableCryopodEnemyCheck:-True}"
+    chown steam:steam "$ini"
+}
+
+# Réglages Game.ini : autre fichier que GameUserSettings.ini, absent des
+# paramètres de lancement classiques ("?clé=valeur"/-options) — friendly fire,
+# XP détaillée par activité, bascules apprivoisement/monte/reproduction.
+appliquer_reglages_game_ini() {
+    local ini="${SERVER_DIR}/ShooterGame/Saved/Config/WindowsServer/Game.ini"
+    local section="/script/shootergame.shootergamemode"
+    appliquer_reglage_ini "$ini" "$section" "bDisableFriendlyFire" "${bDisableFriendlyFire:-False}"
+    appliquer_reglage_ini "$ini" "$section" "bPvEDisableFriendlyFire" "${bPvEDisableFriendlyFire:-False}"
+    appliquer_reglage_ini "$ini" "$section" "bAutoPvETimer" "${bAutoPvETimer:-False}"
+    appliquer_reglage_ini "$ini" "$section" "PreventOfflinePvPConnectionInvincibleInterval" "${PreventOfflinePvPConnectionInvincibleInterval:-5}"
+    appliquer_reglage_ini "$ini" "$section" "GenericXPMultiplier" "${GenericXPMultiplier:-1.0}"
+    appliquer_reglage_ini "$ini" "$section" "KillXPMultiplier" "${KillXPMultiplier:-1.0}"
+    appliquer_reglage_ini "$ini" "$section" "CraftXPMultiplier" "${CraftXPMultiplier:-1.0}"
+    appliquer_reglage_ini "$ini" "$section" "HarvestXPMultiplier" "${HarvestXPMultiplier:-1.0}"
+    appliquer_reglage_ini "$ini" "$section" "bDisableDinoTaming" "${bDisableDinoTaming:-False}"
+    appliquer_reglage_ini "$ini" "$section" "bDisableDinoRiding" "${bDisableDinoRiding:-False}"
+    appliquer_reglage_ini "$ini" "$section" "bDisableDinoBreeding" "${bDisableDinoBreeding:-False}"
+    chown steam:steam "$ini"
 }
 
 # Vrai si la date du jour tombe dans une plage "MM/JJ-MM/JJ" (gère aussi les
@@ -299,7 +346,11 @@ construire_options_lancement() {
     local id_cluster="${CLUSTER_ID:-LudixASACluster}"
     # Le dossier cible existe déjà à côté du binaire (créé plus haut) — chemin
     # relatif, résolu sans ambiguïté par Proton par rapport au dossier courant.
-    local options="-WinLiveMaxPlayers=${MAX_PLAYERS} -log -ClusterDirOverride=cluster-shared -CLUSTER_ID=${id_cluster}"
+    # ServerAdminPassword est ici (option "-", espace-séparée) et pas dans la
+    # chaîne "?clé=valeur" de construire_parametres_partie : placé dans cette
+    # dernière, son parseur avale tout ce qui suit dans la chaîne (bug connu
+    # d'ARK), comme constaté dans GameUserSettings.ini réel du serveur.
+    local options="-ServerAdminPassword=${ASA_ADMIN_PASSWORD} -WinLiveMaxPlayers=${MAX_PLAYERS} -log -ClusterDirOverride=cluster-shared -CLUSTER_ID=${id_cluster}"
     # Anti-triche BattlEye — piloté par la variable NoBattlEye (True/False)
     if [ "${NoBattlEye:-True}" = "True" ]; then
         options="$options -NoBattlEye"
@@ -337,6 +388,9 @@ export PROTON_USE_XALIA=0
 # ── 5. Lancement du serveur via Proton, avec ses logs relayés vers la
 #      sortie du conteneur (docker compose logs) ────────────────────────────
 cd "${SERVER_DIR}/ShooterGame/Binaries/Win64"
+
+appliquer_reglages_cryopod
+appliquer_reglages_game_ini
 
 ASA_START_PARAMS="$(construire_parametres_partie) $(construire_options_lancement)"
 echo "--- Lancement : ArkAscendedServer.exe ${ASA_START_PARAMS} ---"
